@@ -50,6 +50,7 @@ func getTaskFromMap(w http.ResponseWriter, r *http.Request) {
 	resp, err := json.Marshal(tasks)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Println(err.Error())
 		return
 	}
 	// в заголовок записываем тип контента, формат данных - Content-Type — application/json
@@ -124,21 +125,14 @@ func getTaskFromMapById(w http.ResponseWriter, r *http.Request) {
 // func deleteTaskFromMapById принимает в качестве параметров запрос r *http.Request и ответ w http.ResponseWriter
 func deleteTaskFromMapById(w http.ResponseWriter, r *http.Request) {
 	var task Task
-	// используем тип bytes.Buffer для работы с байтовыми данными, в данном случае с содержимым тела запроса (r.Body)
-	var buf bytes.Buffer
 
-	// err = nil - чтение прошло успешно
-	// err != nil - вызываем ошибку (http.Error) с кодом состояния http.StatusBadRequest (должен вернуть статус 400 Bad Request)
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	//chi.URLParam() принимает r, представляющий запрос, и строку с именем параметра (“id”)
+	id := chi.URLParam(r, "id")
 
-	// err = nil - успешно десериализуем JSON из буфера в структуру Task
-	// err != nil - вызываем ошибку (http.Error) с кодом состояния http.StatusBadRequest (должен вернуть статус 400 Bad Request)
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// проверяю существует ли задача с таким ID
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задание не найдено", http.StatusBadRequest)
 		return
 	}
 
